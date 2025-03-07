@@ -1,5 +1,6 @@
 ﻿using CollegeApplication.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CollegeApplication.Controllers
@@ -14,27 +15,28 @@ namespace CollegeApplication.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public ActionResult<IEnumerable<StudentDto>> getStudents()
         {
-            //List<StudentDto> students = new List<StudentDto>();
-            //foreach (var student in CollegeRepository.Students)
-            //{
-            //    StudentDto studentDto = new StudentDto()
-            //    {
-            //        Id = student.Id,
-            //        Name = student.Name,
-            //        Address = student.Address,
-            //        Email = student.Email
-            //    };
-            //    students.Add(studentDto);
-            //}
+            //when we want api to return in xml format as well, then we need to pass the response to OK as List and not Enumerable.
+            List<StudentDto> students = new List<StudentDto>();
+            foreach (var student in CollegeRepository.Students)
+            {
+                StudentDto studentDto = new StudentDto()
+                {
+                    Id = student.Id,
+                    Name = student.Name,
+                    Address = student.Address,
+                    Email = student.Email
+                };
+                students.Add(studentDto);
+            }
 
             //using LINQ
-            var students = CollegeRepository.Students.Select(s => new StudentDto()
-            {
-                Id = s.Id,
-                Name = s.Name,
-                Email = s.Email,
-                Address = s.Address
-            });
+            //var students = CollegeRepository.Students.Select(s => new StudentDto()
+            //{
+            //    Id = s.Id,
+            //    Name = s.Name,
+            //    Email = s.Email,
+            //    Address = s.Address
+            //});
 
             //Ok - 200 - Success
             return Ok(students);
@@ -120,6 +122,7 @@ namespace CollegeApplication.Controllers
 
         [HttpPost]
         [Route("create")]
+        ///api/Student/create
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -132,6 +135,14 @@ namespace CollegeApplication.Controllers
 
             if (studentDto == null)
                 return BadRequest();
+
+            //if(studentDto.AdmissionDate < DateTime.Now)
+            //{
+            //    //1. Directly adding error to modelstate
+            //    //2. To create custom model validator
+            //    ModelState.AddModelError("AdmissionDate Error", "Admission date should be greater than current date.");
+            //    return BadRequest(ModelState);
+            //}
 
             var newId = CollegeRepository.Students.LastOrDefault().Id + 1;
             Student student = new Student()
@@ -151,6 +162,68 @@ namespace CollegeApplication.Controllers
             //New StudentDto details
             return CreatedAtRoute("GetStudentById", new { id = newId }, studentDto);
             //return Ok(studentDto);
+        }
+
+        //Drawback of HttpPut - It will update all the fields. If we want to update only few fields, then we need to use HttpPatch
+        [HttpPut]
+        [Route("update")]
+        //api/Student/update
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult updateStudent([FromBody]StudentDto studentDto)
+        {
+            if(studentDto == null || studentDto.Id <= 0)
+                return BadRequest("Please enter valid student details.");
+
+            var student = CollegeRepository.Students.Where(x => x.Id == studentDto.Id).FirstOrDefault();
+            if (student == null)
+                return NotFound($"Student with id {studentDto.Id} not found.");
+
+            student.Name = studentDto.Name;
+            student.Email = studentDto.Email;
+            student.Address = studentDto.Address;
+
+            //NoContent when nothing to be returned - 204 - Success
+            return NoContent();
+        }
+
+        [HttpPatch]
+        [Route("{id:int}/updatePartial")]
+        //api/Student/updatepartial
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult updatePartialStudent(int id, [FromBody]JsonPatchDocument<StudentDto> studentDto)
+        {
+            if (studentDto == null || id <= 0)
+                return BadRequest("Please enter valid student details.");
+
+            var existingStudent = CollegeRepository.Students.Where(x => x.Id == id).FirstOrDefault();
+            if (existingStudent == null)
+                return NotFound($"Student with id {id} not found.");
+
+            StudentDto studentDto1 = new StudentDto()
+            {
+                Id = existingStudent.Id,
+                Name = existingStudent.Name,
+                Email = existingStudent.Email,
+                Address = existingStudent.Address
+            };
+
+            studentDto.ApplyTo(studentDto1, ModelState);
+            if(!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+
+            existingStudent.Name = studentDto1.Name;
+            existingStudent.Email = studentDto1.Email;
+            existingStudent.Address = studentDto1.Address;
+
+            //NoContent when nothing to be returned - 204 - Success
+            return NoContent();
         }
     }
 }
