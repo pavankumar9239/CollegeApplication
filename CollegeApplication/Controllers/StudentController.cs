@@ -133,6 +133,14 @@ namespace CollegeApplication.Controllers
             if (studentDto == null)
                 return BadRequest();
 
+            //if(studentDto.AdmissionDate < DateTime.Now)
+            //{
+            //    //1. Directly adding error to modelstate
+            //    //2. To create custom model validator
+            //    ModelState.AddModelError("AdmissionDate Error", "Admission date should be greater than current date.");
+            //    return BadRequest(ModelState);
+            //}
+
             var newId = CollegeRepository.Students.LastOrDefault().Id + 1;
             Student student = new Student()
             {
