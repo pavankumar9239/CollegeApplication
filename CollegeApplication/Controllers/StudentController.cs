@@ -9,12 +9,21 @@ namespace CollegeApplication.Controllers
     [ApiController]
     public class StudentController : ControllerBase
     {
+        private readonly ILogger<StudentController> _logger;
+
+        public StudentController(ILogger<StudentController> logger)
+        {
+            _logger = logger;
+        }
+
+
         [HttpGet]
         [Route("All")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public ActionResult<IEnumerable<StudentDto>> getStudents()
         {
+            _logger.LogInformation("Get Student method");
             //when we want api to return in xml format as well, then we need to pass the response to OK as List and not Enumerable.
             List<StudentDto> students = new List<StudentDto>();
             foreach (var student in CollegeRepository.Students)
@@ -49,14 +58,22 @@ namespace CollegeApplication.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public ActionResult getStudentById(int id)
         {
+            _logger.LogInformation("GetStudentsById method");
             //BadRequest - 400 - Client Error
             if (id <= 0)
+            {
+                _logger.LogWarning("Bad Request");
                 return BadRequest();
+            }
+                
 
             var student = CollegeRepository.Students.Where(x => x.Id == id).FirstOrDefault();
             //NotFound - 404 - Client Error
             if (student == null)
+            {
+                _logger.LogError("Student with provided id not found.");
                 return NotFound($"Student with id {id} not found.");
+            }
 
             var studentDto = new StudentDto()
             {
