@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Repository.DBContext;
+using Repository.Models;
 
 namespace CollegeApplication.Controllers
 {
@@ -10,10 +12,12 @@ namespace CollegeApplication.Controllers
     public class StudentController : ControllerBase
     {
         private readonly ILogger<StudentController> _logger;
+        private readonly CollegeDBContext _dbContext;
 
-        public StudentController(ILogger<StudentController> logger)
+        public StudentController(ILogger<StudentController> logger, CollegeDBContext collegeDBContext)
         {
             _logger = logger;
+            _dbContext = collegeDBContext;
         }
 
 
@@ -26,14 +30,15 @@ namespace CollegeApplication.Controllers
             _logger.LogInformation("Get Student method");
             //when we want api to return in xml format as well, then we need to pass the response to OK as List and not Enumerable.
             List<StudentDto> students = new List<StudentDto>();
-            foreach (var student in CollegeRepository.Students)
+            foreach (var student in _dbContext.Students)
             {
                 StudentDto studentDto = new StudentDto()
                 {
                     Id = student.Id,
                     Name = student.Name,
                     Address = student.Address,
-                    Email = student.Email
+                    Email = student.Email,
+                    DOB = student.DOB
                 };
                 students.Add(studentDto);
             }
@@ -67,7 +72,7 @@ namespace CollegeApplication.Controllers
             }
                 
 
-            var student = CollegeRepository.Students.Where(x => x.Id == id).FirstOrDefault();
+            var student = _dbContext.Students.Where(x => x.Id == id).FirstOrDefault();
             //NotFound - 404 - Client Error
             if (student == null)
             {
@@ -80,7 +85,8 @@ namespace CollegeApplication.Controllers
                 Id = student.Id,
                 Name = student.Name,
                 Email = student.Email,
-                Address = student.Address
+                Address = student.Address,
+                DOB = student.DOB
             };
 
             //Ok - 200 - Success
@@ -99,13 +105,16 @@ namespace CollegeApplication.Controllers
             if (id <= 0)
                 return BadRequest();
 
-            var student = CollegeRepository.Students.Where(x => x.Id == id).FirstOrDefault();
+            var student = _dbContext.Students.Where(x => x.Id == id).FirstOrDefault();
             //NotFound - 404 - Client Error
             if (student == null)
                 return NotFound($"Student with id {id} not found.");
 
+            _dbContext.Students.Remove(student);
+            _dbContext.SaveChanges();
+
             //Ok - 200 - Success
-            return Ok(CollegeRepository.Students.Remove(student));
+            return Ok(true);
         }
 
         [HttpGet]
@@ -120,7 +129,7 @@ namespace CollegeApplication.Controllers
             if (string.IsNullOrEmpty(name))
                 return BadRequest();
 
-            var student = CollegeRepository.Students.Where(x => x.Name == name).FirstOrDefault();
+            var student = _dbContext.Students.Where(x => x.Name == name).FirstOrDefault();
             //NotFound - 404 - Client Error
             if (student == null)
                 return NotFound($"Student with name {name} not found.");
@@ -130,7 +139,8 @@ namespace CollegeApplication.Controllers
                 Id = student.Id,
                 Name = student.Name,
                 Email = student.Email,
-                Address = student.Address
+                Address = student.Address,
+                DOB = student.DOB
             };
 
             //Ok - 200 - Success
@@ -161,23 +171,24 @@ namespace CollegeApplication.Controllers
             //    return BadRequest(ModelState);
             //}
 
-            var newId = CollegeRepository.Students.LastOrDefault().Id + 1;
+            //var newId = CollegeRepository.Students.LastOrDefault().Id + 1;
             Student student = new Student()
             {
-                Id = newId,
+                //Id = newId,
                 Name = studentDto.Name,
                 Email = studentDto.Email,
-                Address = studentDto.Address
+                Address = studentDto.Address,
+                DOB = studentDto.DOB
             };
-            CollegeRepository.Students.Add(student);
-
-            studentDto.Id = newId;
+            _dbContext.Students.Add(student);
+            _dbContext.SaveChanges();
+            studentDto.Id = student.Id;
 
             //Returns
             // status - 201 
             //https://localhost:5204/api/Student/3
             //New StudentDto details
-            return CreatedAtRoute("GetStudentById", new { id = newId }, studentDto);
+            return CreatedAtRoute("GetStudentById", new { id = student.Id }, studentDto);
             //return Ok(studentDto);
         }
 
@@ -194,13 +205,16 @@ namespace CollegeApplication.Controllers
             if(studentDto == null || studentDto.Id <= 0)
                 return BadRequest("Please enter valid student details.");
 
-            var student = CollegeRepository.Students.Where(x => x.Id == studentDto.Id).FirstOrDefault();
+            var student = _dbContext.Students.Where(x => x.Id == studentDto.Id).FirstOrDefault();
             if (student == null)
                 return NotFound($"Student with id {studentDto.Id} not found.");
 
             student.Name = studentDto.Name;
             student.Email = studentDto.Email;
             student.Address = studentDto.Address;
+            student.DOB = studentDto.DOB;
+
+            _dbContext.SaveChanges();
 
             //NoContent when nothing to be returned - 204 - Success
             return NoContent();
@@ -218,7 +232,7 @@ namespace CollegeApplication.Controllers
             if (studentDto == null || id <= 0)
                 return BadRequest("Please enter valid student details.");
 
-            var existingStudent = CollegeRepository.Students.Where(x => x.Id == id).FirstOrDefault();
+            var existingStudent = _dbContext.Students.Where(x => x.Id == id).FirstOrDefault();
             if (existingStudent == null)
                 return NotFound($"Student with id {id} not found.");
 
@@ -227,7 +241,8 @@ namespace CollegeApplication.Controllers
                 Id = existingStudent.Id,
                 Name = existingStudent.Name,
                 Email = existingStudent.Email,
-                Address = existingStudent.Address
+                Address = existingStudent.Address,
+                DOB = existingStudent.DOB
             };
 
             studentDto.ApplyTo(studentDto1, ModelState);
@@ -238,6 +253,9 @@ namespace CollegeApplication.Controllers
             existingStudent.Name = studentDto1.Name;
             existingStudent.Email = studentDto1.Email;
             existingStudent.Address = studentDto1.Address;
+            existingStudent.DOB = studentDto1.DOB;
+
+            _dbContext.SaveChanges();
 
             //NoContent when nothing to be returned - 204 - Success
             return NoContent();

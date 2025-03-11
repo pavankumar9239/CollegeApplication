@@ -62,8 +62,8 @@ namespace CollegeApplication
         static void ConfigureServices(IServiceCollection services)
         {
             // Add services to the container.
+            services.AddControllers().AddNewtonsoftJson().AddXmlDataContractSerializerFormatters(); //options => options.ReturnHttpNotAcceptable = true
 
-            services.AddControllers(options => options.ReturnHttpNotAcceptable = true).AddNewtonsoftJson().AddXmlDataContractSerializerFormatters();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();

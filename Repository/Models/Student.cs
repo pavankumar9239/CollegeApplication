@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Models
 {
-    class Student
+    public class Student
     {
         //Key attribute to tell that that field is a key attribute
         //[Key]
