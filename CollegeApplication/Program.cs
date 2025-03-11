@@ -1,6 +1,8 @@
 
 using CollegeApplication.Logger;
 using Serilog;
+using Repository.DBContext;
+using Microsoft.EntityFrameworkCore;
 
 namespace CollegeApplication
 {
@@ -17,7 +19,11 @@ namespace CollegeApplication
             //builder.Logging.AddConsole();
             //builder.Logging.AddDebug();
 
+
             ConfigureServices(builder.Services);
+
+            builder.Services.AddDbContext<CollegeDBContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("CollegeAppDB")));
 
             //builder.Logging.AddLog4Net();
 
@@ -32,7 +38,7 @@ namespace CollegeApplication
             //builder.Host.UseSerilog();
 
             //If you want to use Serilog along with default loggers.
-            builder.Logging.AddSerilog();
+            //builder.Logging.AddSerilog();
             #endregion
 
             var app = builder.Build();
@@ -43,7 +49,7 @@ namespace CollegeApplication
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
@@ -53,7 +59,7 @@ namespace CollegeApplication
             app.Run();
         }
 
-static void ConfigureServices(IServiceCollection services)
+        static void ConfigureServices(IServiceCollection services)
         {
             // Add services to the container.
 
@@ -66,6 +72,12 @@ static void ConfigureServices(IServiceCollection services)
             //services.AddSerilog();
 
             //services.AddScoped<IMyLogger, LogToFile>();
+
+            //Adding DB context class from Repository project
+            services.AddDbContext<CollegeDBContext>(options =>
+            {
+                options.UseSqlServer();
+            });
         }
     }
 }
