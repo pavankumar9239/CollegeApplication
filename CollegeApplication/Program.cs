@@ -1,5 +1,6 @@
 
 using CollegeApplication.Logger;
+using Serilog;
 
 namespace CollegeApplication
 {
@@ -17,6 +18,22 @@ namespace CollegeApplication
             //builder.Logging.AddDebug();
 
             ConfigureServices(builder.Services);
+
+            //builder.Logging.AddLog4Net();
+
+            #region Serilog settings
+            //For using Serilog
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Information()
+                .WriteTo.File("Log/log-.txt", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+
+            //If you want to use only serilog and not any other loggers.
+            //builder.Host.UseSerilog();
+
+            //If you want to use Serilog along with default loggers.
+            builder.Logging.AddSerilog();
+            #endregion
 
             var app = builder.Build();
 
@@ -45,7 +62,10 @@ static void ConfigureServices(IServiceCollection services)
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
 
-            services.AddScoped<IMyLogger, LogToFile>();
+            //Use Serilog
+            //services.AddSerilog();
+
+            //services.AddScoped<IMyLogger, LogToFile>();
         }
     }
 }

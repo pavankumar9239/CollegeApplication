@@ -10,9 +10,9 @@ namespace CollegeApplication.Controllers
     {
         //1. Strongly/tightly coupled
         //2. Loosely coupled
-        private readonly ILogger _logger;
+        private readonly ILogger<DemoController> _logger;
 
-        public DemoController(ILogger logger)
+        public DemoController(ILogger<DemoController> logger)
         {
             _logger = logger;
         }
@@ -20,7 +20,12 @@ namespace CollegeApplication.Controllers
         [HttpGet]
         public ActionResult Index()
         {
-            _logger.LogInformation("Index method started");
+            _logger.LogTrace("Index method started Trace");
+            _logger.LogDebug("Index method started Debug");
+            _logger.LogInformation("Index method started Information");
+            _logger.LogWarning("Index method started Warning");
+            _logger.LogError("Index method started Error");
+            _logger.LogCritical("Index method started Critical");
             return Ok();
         }
     }
