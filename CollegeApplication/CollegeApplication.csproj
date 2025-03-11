@@ -1,10 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Log1\**" />
+    <Content Remove="Log1\**" />
+    <EmbeddedResource Remove="Log1\**" />
+    <None Remove="Log1\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="9.0.2" />
