@@ -1,4 +1,5 @@
-﻿using CollegeApplication.Models;
+﻿using AutoMapper;
+using CollegeApplication.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -14,11 +15,13 @@ namespace CollegeApplication.Controllers
     {
         private readonly ILogger<StudentController> _logger;
         private readonly CollegeDBContext _dbContext;
+        private readonly IMapper _mapper;
 
-        public StudentController(ILogger<StudentController> logger, CollegeDBContext collegeDBContext)
+        public StudentController(ILogger<StudentController> logger, CollegeDBContext collegeDBContext, IMapper mapper)
         {
             _logger = logger;
             _dbContext = collegeDBContext;
+            _mapper = mapper;
         }
 
 
@@ -31,17 +34,20 @@ namespace CollegeApplication.Controllers
             _logger.LogInformation("Get Student method");
 
             //To fetch all data in Students table
-            //var students = _dbContext.Students;
+            var students = _dbContext.Students;
 
             //To fetch as customlist
-            var students = await _dbContext.Students.Select(s => new StudentDto()
-            {
-                Id = s.Id,
-                Name = s.Name,
-                Address = s.Address,
-                Email = s.Email,
-                DOB = s.DOB
-            }).ToListAsync();
+            //var students = await _dbContext.Students.Select(s => new StudentDto()
+            //{
+            //    Id = s.Id,
+            //    Name = s.Name,
+            //    Address = s.Address,
+            //    Email = s.Email,
+            //    DOB = s.DOB
+            //}).ToListAsync();
+
+            //Field mapping can be done usinf automapper
+            var studentDtoData = _mapper.Map<List<StudentDto>>(students);
 
             //when we want api to return in xml format as well, then we need to pass the response to OK as List and not Enumerable.
             //List<StudentDto> students = new List<StudentDto>();
@@ -68,7 +74,7 @@ namespace CollegeApplication.Controllers
             //});
 
             //Ok - 200 - Success
-            return Ok(students);
+            return Ok(studentDtoData);
         }
 
         [HttpGet("{id:int}", Name = "GetStudentById")]
@@ -95,17 +101,19 @@ namespace CollegeApplication.Controllers
                 return NotFound($"Student with id {id} not found.");
             }
 
-            var studentDto = new StudentDto()
-            {
-                Id = student.Id,
-                Name = student.Name,
-                Email = student.Email,
-                Address = student.Address,
-                DOB = student.DOB
-            };
+            //var studentDto = new StudentDto()
+            //{
+            //    Id = student.Id,
+            //    Name = student.Name,
+            //    Email = student.Email,
+            //    Address = student.Address,
+            //    DOB = student.DOB
+            //};
+
+            var studentDtoData = _mapper.Map<StudentDto>(student);
 
             //Ok - 200 - Success
-            return Ok(studentDto);
+            return Ok(studentDtoData);
         }
 
         [HttpGet]
@@ -125,14 +133,16 @@ namespace CollegeApplication.Controllers
             if (student == null)
                 return NotFound($"Student with name {name} not found.");
 
-            var studentDto = new StudentDto()
-            {
-                Id = student.Id,
-                Name = student.Name,
-                Email = student.Email,
-                Address = student.Address,
-                DOB = student.DOB
-            };
+            //var studentDto = new StudentDto()
+            //{
+            //    Id = student.Id,
+            //    Name = student.Name,
+            //    Email = student.Email,
+            //    Address = student.Address,
+            //    DOB = student.DOB
+            //};
+
+            var studentDto = _mapper.Map<StudentDto>(student);
 
             //Ok - 200 - Success
             return Ok(studentDto);
@@ -163,14 +173,17 @@ namespace CollegeApplication.Controllers
             //}
 
             //var newId = CollegeRepository.Students.LastOrDefault().Id + 1;
-            Student student = new Student()
-            {
-                //Id = newId,
-                Name = studentDto.Name,
-                Email = studentDto.Email,
-                Address = studentDto.Address,
-                DOB = studentDto.DOB
-            };
+            //Student student = new Student()
+            //{
+            //    //Id = newId,
+            //    Name = studentDto.Name,
+            //    Email = studentDto.Email,
+            //    Address = studentDto.Address,
+            //    DOB = studentDto.DOB
+            //};
+
+            var student = _mapper.Map<Student>(studentDto);
+
             _dbContext.Students.Add(student);
             await _dbContext.SaveChangesAsync();
             studentDto.Id = student.Id;
@@ -201,14 +214,16 @@ namespace CollegeApplication.Controllers
             if (student == null)
                 return NotFound($"Student with id {studentDto.Id} not found.");
 
-            var newStudent = new Student()
-            {
-                Id = student.Id,
-                Name = studentDto.Name,
-                Address = studentDto.Address,
-                Email = studentDto.Email,
-                DOB = studentDto.DOB
-            };
+            //var newStudent = new Student()
+            //{
+            //    Id = student.Id,
+            //    Name = studentDto.Name,
+            //    Address = studentDto.Address,
+            //    Email = studentDto.Email,
+            //    DOB = studentDto.DOB
+            //};
+
+            var newStudent = _mapper.Map<Student>(studentDto);
 
             _dbContext.Students.Update(newStudent);
 
@@ -236,28 +251,34 @@ namespace CollegeApplication.Controllers
             if (studentDto == null || id <= 0)
                 return BadRequest("Please enter valid student details.");
 
-            var existingStudent = await _dbContext.Students.Where(x => x.Id == id).FirstOrDefaultAsync();
+            var existingStudent = await _dbContext.Students.AsNoTracking().Where(x => x.Id == id).FirstOrDefaultAsync();
             if (existingStudent == null)
                 return NotFound($"Student with id {id} not found.");
 
-            StudentDto studentDto1 = new StudentDto()
-            {
-                Id = existingStudent.Id,
-                Name = existingStudent.Name,
-                Email = existingStudent.Email,
-                Address = existingStudent.Address,
-                DOB = existingStudent.DOB
-            };
+            //StudentDto studentDto1 = new StudentDto()
+            //{
+            //    Id = existingStudent.Id,
+            //    Name = existingStudent.Name,
+            //    Email = existingStudent.Email,
+            //    Address = existingStudent.Address,
+            //    DOB = existingStudent.DOB
+            //};
+
+            var studentDto1 = _mapper.Map<StudentDto>(existingStudent);
 
             studentDto.ApplyTo(studentDto1, ModelState);
             if(!ModelState.IsValid)
                 return BadRequest(ModelState);
 
 
-            existingStudent.Name = studentDto1.Name;
-            existingStudent.Email = studentDto1.Email;
-            existingStudent.Address = studentDto1.Address;
-            existingStudent.DOB = studentDto1.DOB;
+            //existingStudent.Name = studentDto1.Name;
+            //existingStudent.Email = studentDto1.Email;
+            //existingStudent.Address = studentDto1.Address;
+            //existingStudent.DOB = studentDto1.DOB;
+
+            existingStudent = _mapper.Map<Student>(studentDto1);
+
+            _dbContext.Students.Update(existingStudent);
 
             await _dbContext.SaveChangesAsync();
 

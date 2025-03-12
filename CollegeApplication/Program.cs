@@ -3,6 +3,7 @@ using CollegeApplication.Logger;
 using Serilog;
 using Repository.DBContext;
 using Microsoft.EntityFrameworkCore;
+using CollegeApplication.Configurations;
 
 namespace CollegeApplication
 {
@@ -78,6 +79,8 @@ namespace CollegeApplication
             {
                 options.UseSqlServer();
             });
+
+            services.AddAutoMapper(typeof(AutoMapperConfig));
         }
     }
 }
