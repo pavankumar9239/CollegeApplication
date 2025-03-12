@@ -22,7 +22,7 @@ namespace CollegeApplication.Models
         ////[Compare("Password", ErrorMessage = "Password and Confirm Password should match.")]
         //[Compare(nameof(Password), ErrorMessage = "Password and Confirm Password should match.")]
         //public string ConfirmPassword { get; set; }
-        [DateCheck]
-        public DateTime AdmissionDate { get; set; }
+        //[DateCheck]
+        public DateTime DOB { get; set; }
     }
 }
