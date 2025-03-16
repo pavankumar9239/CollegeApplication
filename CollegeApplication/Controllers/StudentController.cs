@@ -14,9 +14,9 @@ namespace CollegeApplication.Controllers
     {
         private readonly ILogger<StudentController> _logger;
         private readonly IMapper _mapper;
-        private readonly IStudentRepository _studentRepository;
+        private readonly ICollegeRepository<Student> _studentRepository;
 
-        public StudentController(ILogger<StudentController> logger, IMapper mapper, IStudentRepository studentRepository)
+        public StudentController(ILogger<StudentController> logger, IMapper mapper, ICollegeRepository<Student> studentRepository)
         {
             _logger = logger;
             _mapper = mapper;
@@ -33,7 +33,7 @@ namespace CollegeApplication.Controllers
             _logger.LogInformation("Get Student method");
 
             //To fetch all data in Students table
-            var students = await _studentRepository.GetStudentsAsync();
+            var students = await _studentRepository.GetAllAsync();
 
             //To fetch as customlist
             //var students = await _dbContext.Students.Select(s => new StudentDto()
@@ -92,7 +92,7 @@ namespace CollegeApplication.Controllers
             }
 
 
-            var student = await _studentRepository.GetStudentByIdAsync(id);
+            var student = await _studentRepository.GetByIdAsync(student => student.Id == id);
             //NotFound - 404 - Client Error
             if (student == null)
             {
@@ -127,7 +127,7 @@ namespace CollegeApplication.Controllers
             if (string.IsNullOrEmpty(name))
                 return BadRequest();
 
-            var student = await _studentRepository.GetStudentByNameAsync(name);
+            var student = await _studentRepository.GetByNameAsync(student => student.Name.ToLower().Contains(name.ToLower()));
             //NotFound - 404 - Client Error
             if (student == null)
                 return NotFound($"Student with name {name} not found.");
@@ -183,14 +183,14 @@ namespace CollegeApplication.Controllers
 
             var student = _mapper.Map<Student>(studentDto);
 
-            var studentId = await _studentRepository.CreateStudentAsync(student);
-            studentDto.Id = studentId;
+            student = await _studentRepository.CreateAsync(student);
+            studentDto.Id = student.Id;
 
             //Returns
             // status - 201 
             //https://localhost:5204/api/Student/3
             //New StudentDto details
-            return CreatedAtRoute("GetStudentById", new { id = studentId }, studentDto);
+            return CreatedAtRoute("GetStudentById", new { id = student.Id }, studentDto);
             //return Ok(studentDto);
         }
 
@@ -208,7 +208,7 @@ namespace CollegeApplication.Controllers
                 return BadRequest("Please enter valid student details.");
 
             //If we fetch the record with no tracking, then we can create a new object for entity class and directly update the record and need not have to map all columns as we did earlier.
-            var student = await _studentRepository.GetStudentByIdAsync(studentDto.Id, true);
+            var student = await _studentRepository.GetByIdAsync(student => student.Id == studentDto.Id, true);
             if (student == null)
                 return NotFound($"Student with id {studentDto.Id} not found.");
 
@@ -223,7 +223,7 @@ namespace CollegeApplication.Controllers
 
             var newStudent = _mapper.Map<Student>(studentDto);
 
-            await _studentRepository.UpdateStudentAsync(newStudent);
+            await _studentRepository.UpdateAsync(newStudent);
 
             //Earlier approach
             //student.Name = studentDto.Name;
@@ -247,7 +247,7 @@ namespace CollegeApplication.Controllers
             if (studentDto == null || id <= 0)
                 return BadRequest("Please enter valid student details.");
 
-            var existingStudent = await _studentRepository.GetStudentByIdAsync(id, true);
+            var existingStudent = await _studentRepository.GetByIdAsync(student => student.Id == id, true);
             if (existingStudent == null)
                 return NotFound($"Student with id {id} not found.");
 
@@ -274,7 +274,7 @@ namespace CollegeApplication.Controllers
 
             existingStudent = _mapper.Map<Student>(studentDto1);
 
-            await _studentRepository.UpdateStudentAsync(existingStudent);
+            await _studentRepository.UpdateAsync(existingStudent);
 
             //NoContent when nothing to be returned - 204 - Success
             return NoContent();
@@ -292,13 +292,13 @@ namespace CollegeApplication.Controllers
             if (id <= 0)
                 return BadRequest();
 
-            var student = await _studentRepository.GetStudentByIdAsync(id);
+            var student = await _studentRepository.GetByIdAsync(student => student.Id == id);
             //NotFound - 404 - Client Error
             if (student == null)
                 return NotFound($"Student with id {id} not found.");
 
             //Ok - 200 - Success
-            return Ok(await _studentRepository.DeleteStudentAsync(student));
+            return Ok(await _studentRepository.DeleteAsync(student));
         }
     }
 }
