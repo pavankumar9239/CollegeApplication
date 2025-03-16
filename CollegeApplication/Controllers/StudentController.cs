@@ -3,8 +3,7 @@ using CollegeApplication.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Repository.DBContext;
+using Repository.Contracts;
 using Repository.Models;
 
 namespace CollegeApplication.Controllers
@@ -14,14 +13,14 @@ namespace CollegeApplication.Controllers
     public class StudentController : ControllerBase
     {
         private readonly ILogger<StudentController> _logger;
-        private readonly CollegeDBContext _dbContext;
         private readonly IMapper _mapper;
+        private readonly IStudentRepository _studentRepository;
 
-        public StudentController(ILogger<StudentController> logger, CollegeDBContext collegeDBContext, IMapper mapper)
+        public StudentController(ILogger<StudentController> logger, IMapper mapper, IStudentRepository studentRepository)
         {
             _logger = logger;
-            _dbContext = collegeDBContext;
             _mapper = mapper;
+            _studentRepository = studentRepository;
         }
 
 
@@ -34,7 +33,7 @@ namespace CollegeApplication.Controllers
             _logger.LogInformation("Get Student method");
 
             //To fetch all data in Students table
-            var students = _dbContext.Students;
+            var students = await _studentRepository.GetStudentsAsync();
 
             //To fetch as customlist
             //var students = await _dbContext.Students.Select(s => new StudentDto()
@@ -91,9 +90,9 @@ namespace CollegeApplication.Controllers
                 _logger.LogWarning("Bad Request");
                 return BadRequest();
             }
-                
 
-            var student = await _dbContext.Students.Where(x => x.Id == id).FirstOrDefaultAsync();
+
+            var student = await _studentRepository.GetStudentByIdAsync(id);
             //NotFound - 404 - Client Error
             if (student == null)
             {
@@ -128,7 +127,7 @@ namespace CollegeApplication.Controllers
             if (string.IsNullOrEmpty(name))
                 return BadRequest();
 
-            var student = await _dbContext.Students.Where(x => x.Name == name).FirstOrDefaultAsync();
+            var student = await _studentRepository.GetStudentByNameAsync(name);
             //NotFound - 404 - Client Error
             if (student == null)
                 return NotFound($"Student with name {name} not found.");
@@ -184,15 +183,14 @@ namespace CollegeApplication.Controllers
 
             var student = _mapper.Map<Student>(studentDto);
 
-            _dbContext.Students.Add(student);
-            await _dbContext.SaveChangesAsync();
-            studentDto.Id = student.Id;
+            var studentId = await _studentRepository.CreateStudentAsync(student);
+            studentDto.Id = studentId;
 
             //Returns
             // status - 201 
             //https://localhost:5204/api/Student/3
             //New StudentDto details
-            return CreatedAtRoute("GetStudentById", new { id = student.Id }, studentDto);
+            return CreatedAtRoute("GetStudentById", new { id = studentId }, studentDto);
             //return Ok(studentDto);
         }
 
@@ -210,7 +208,7 @@ namespace CollegeApplication.Controllers
                 return BadRequest("Please enter valid student details.");
 
             //If we fetch the record with no tracking, then we can create a new object for entity class and directly update the record and need not have to map all columns as we did earlier.
-            var student = await _dbContext.Students.Where(x => x.Id == studentDto.Id).AsNoTracking().FirstOrDefaultAsync();
+            var student = await _studentRepository.GetStudentByIdAsync(studentDto.Id, true);
             if (student == null)
                 return NotFound($"Student with id {studentDto.Id} not found.");
 
@@ -225,15 +223,13 @@ namespace CollegeApplication.Controllers
 
             var newStudent = _mapper.Map<Student>(studentDto);
 
-            _dbContext.Students.Update(newStudent);
+            await _studentRepository.UpdateStudentAsync(newStudent);
 
             //Earlier approach
             //student.Name = studentDto.Name;
             //student.Email = studentDto.Email;
             //student.Address = studentDto.Address;
             //student.DOB = studentDto.DOB;
-
-            await _dbContext.SaveChangesAsync();
 
             //NoContent when nothing to be returned - 204 - Success
             return NoContent();
@@ -251,7 +247,7 @@ namespace CollegeApplication.Controllers
             if (studentDto == null || id <= 0)
                 return BadRequest("Please enter valid student details.");
 
-            var existingStudent = await _dbContext.Students.AsNoTracking().Where(x => x.Id == id).FirstOrDefaultAsync();
+            var existingStudent = await _studentRepository.GetStudentByIdAsync(id, true);
             if (existingStudent == null)
                 return NotFound($"Student with id {id} not found.");
 
@@ -278,9 +274,7 @@ namespace CollegeApplication.Controllers
 
             existingStudent = _mapper.Map<Student>(studentDto1);
 
-            _dbContext.Students.Update(existingStudent);
-
-            await _dbContext.SaveChangesAsync();
+            await _studentRepository.UpdateStudentAsync(existingStudent);
 
             //NoContent when nothing to be returned - 204 - Success
             return NoContent();
@@ -298,16 +292,13 @@ namespace CollegeApplication.Controllers
             if (id <= 0)
                 return BadRequest();
 
-            var student = await _dbContext.Students.Where(x => x.Id == id).FirstOrDefaultAsync();
+            var student = await _studentRepository.GetStudentByIdAsync(id);
             //NotFound - 404 - Client Error
             if (student == null)
                 return NotFound($"Student with id {id} not found.");
 
-            _dbContext.Students.Remove(student);
-            await _dbContext.SaveChangesAsync();
-
             //Ok - 200 - Success
-            return Ok(true);
+            return Ok(await _studentRepository.DeleteStudentAsync(student));
         }
     }
 }

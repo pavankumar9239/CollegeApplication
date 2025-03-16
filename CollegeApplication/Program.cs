@@ -4,6 +4,7 @@ using Serilog;
 using Repository.DBContext;
 using Microsoft.EntityFrameworkCore;
 using CollegeApplication.Configurations;
+using Repository.RepositoryExtensions;
 
 namespace CollegeApplication
 {
@@ -81,6 +82,8 @@ namespace CollegeApplication
             });
 
             services.AddAutoMapper(typeof(AutoMapperConfig));
+
+            RepositoryExtensions.AddRepositoriesExtensions(services);
         }
     }
 }
