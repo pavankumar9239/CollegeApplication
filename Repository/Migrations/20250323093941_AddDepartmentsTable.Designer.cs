@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repository.DBContext;
 
@@ -11,9 +12,11 @@ using Repository.DBContext;
 namespace Repository.Migrations
 {
     [DbContext(typeof(CollegeDBContext))]
-    partial class CollegeDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250323093941_AddDepartmentsTable")]
+    partial class AddDepartmentsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -98,7 +101,6 @@ namespace Repository.Migrations
                             Id = 1,
                             Address = "SKLM",
                             DOB = new DateTime(1997, 12, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DepatmentId = 1,
                             Email = "apk@gmail.com",
                             Name = "APK"
                         },
@@ -107,7 +109,6 @@ namespace Repository.Migrations
                             Id = 2,
                             Address = "VIZAG",
                             DOB = new DateTime(2000, 9, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DepatmentId = 2,
                             Email = "poojita@gmail.com",
                             Name = "Poojita"
                         });

@@ -5,53 +5,19 @@ using Repository.Models;
 
 namespace Repository.Implementations
 {
-    class StudentRepository : IStudentRepository
+    class StudentRepository : CollegeRepository<Student>, IStudentRepository
     {
         private readonly CollegeDBContext _dbContext;
 
-        public StudentRepository(CollegeDBContext dBContext)
+        public StudentRepository(CollegeDBContext dBContext) : base(dBContext)
         {
             _dbContext = dBContext;
         }
 
-        public async Task<int> CreateStudentAsync(Student student)
+        public Task<List<Student>> GetStudentsByFeeStatusAsync(int feeStatus)
         {
-            await _dbContext.Students.AddAsync(student);
-            await _dbContext.SaveChangesAsync();
-            return student.Id;
-        }
-
-        public async Task<bool> DeleteStudentAsync(Student student)
-        {
-            _dbContext.Students.Remove(student);
-            await _dbContext.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<Student> GetStudentByIdAsync(int id, bool asNoTracking = false)
-        {
-            if(asNoTracking)
-            {
-                return await _dbContext.Students.AsNoTracking().Where(Student => Student.Id == id).FirstOrDefaultAsync();
-            }
-            return await _dbContext.Students.Where(Student => Student.Id == id).FirstOrDefaultAsync();
-        }
-
-        public async Task<Student> GetStudentByNameAsync(string name)
-        {
-            return await _dbContext.Students.Where(x => x.Name.ToLower().Contains(name.ToLower())).FirstOrDefaultAsync();
-        }
-
-        public async Task<List<Student>> GetStudentsAsync()
-        {
-            return await _dbContext.Students.ToListAsync();
-        }
-
-        public async Task<int> UpdateStudentAsync(Student student)
-        {
-            _dbContext.Students.Update(student);
-            await _dbContext.SaveChangesAsync();
-            return student.Id;
+            //write to code to return staudent based on feestatus
+            return null;
         }
     }
 }

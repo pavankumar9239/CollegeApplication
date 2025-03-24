@@ -7,13 +7,8 @@ using System.Threading.Tasks;
 
 namespace Repository.Contracts
 {
-    public interface IStudentRepository
+    public interface IStudentRepository : ICollegeRepository<Student>
     {
-        Task<List<Student>> GetStudentsAsync();
-        Task<Student> GetStudentByIdAsync(int id, bool asNoTracking = false);
-        Task<Student> GetStudentByNameAsync(string name);
-        Task<int> CreateStudentAsync(Student student);
-        Task<int> UpdateStudentAsync(Student student);
-        Task<bool> DeleteStudentAsync(Student student);
+        Task<List<Student>> GetStudentsByFeeStatusAsync(int feeStatus);
     }
 }

@@ -5,6 +5,7 @@ using Repository.DBContext;
 using Microsoft.EntityFrameworkCore;
 using CollegeApplication.Configurations;
 using Repository.RepositoryExtensions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CollegeApplication
 {
@@ -25,9 +26,46 @@ namespace CollegeApplication
             ConfigureServices(builder.Services);
 
             builder.Services.AddDbContext<CollegeDBContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("CollegeAppDB")));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("CollegeDB")));
 
             //builder.Logging.AddLog4Net();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    //To allow all origins
+                    policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                });
+                //options.AddPolicy("AllowAll", policy =>
+                //{
+                //    //To allow all origins
+                //    policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                //});
+                options.AddPolicy("AllowLocalHost", policy =>
+                {
+                    //To Allow localhost origins
+                    policy.WithOrigins("http://localhost:5197").AllowAnyHeader().AllowAnyMethod();
+                });
+                options.AddPolicy("AllowOnlyGoogle", policy =>
+                {
+                    //To Allow few origins
+                    policy.WithOrigins("http://google.com", "http://mail.google.com", "http://drive.google.com").AllowAnyHeader().AllowAnyMethod();
+                });
+                options.AddPolicy("AllowOnlyMicrosoft", policy =>
+                {
+                    //To Allow few origins
+                    policy.WithOrigins("http://microsoft.com", "http://onedrive.microsoft.com", "http://mail.microsoft.com").AllowAnyHeader().AllowAnyMethod();
+                });
+                //options.AddPolicy("MyTestPolicy", policy =>
+                //{
+                //    //To Allow few origins
+                //    policy.WithOrigins("http://localhost:5197").AllowAnyHeader().AllowAnyMethod();
+
+                //    //To allow all origins
+                //    //policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                //});
+            });
 
             #region Serilog settings
             //For using Serilog
@@ -54,9 +92,29 @@ namespace CollegeApplication
             
             app.UseHttpsRedirection();
 
+            app.UseRouting();
+
+            //should be added before Authorization and after routing
+            //app.UseCors("MyTestPolicy");
+            //To use default policy
+            app.UseCors();
+
             app.UseAuthorization();
 
-            app.MapControllers();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapGet("api/testingEndpoint",
+                    context => context.Response.WriteAsync("Test Response"))
+                    .RequireCors("AllowLocalHost");
+
+                endpoints.MapControllers()
+                .RequireCors("AllowAll");
+
+                endpoints.MapGet("api/testingEndpoint2",
+                    context => context.Response.WriteAsync("Test Response 2"));
+            });
+
+            //app.MapControllers();
 
             app.Run();
         }

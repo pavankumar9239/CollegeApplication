@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using CollegeApplication.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -10,13 +12,16 @@ namespace CollegeApplication.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    //[EnableCors(PolicyName = "AllowLocalHost")]
+    [Authorize]
     public class StudentController : ControllerBase
     {
         private readonly ILogger<StudentController> _logger;
         private readonly IMapper _mapper;
-        private readonly ICollegeRepository<Student> _studentRepository;
+        //private readonly ICollegeRepository<Student> _studentRepository;
+        private readonly IStudentRepository _studentRepository;
 
-        public StudentController(ILogger<StudentController> logger, IMapper mapper, ICollegeRepository<Student> studentRepository)
+        public StudentController(ILogger<StudentController> logger, IMapper mapper, IStudentRepository studentRepository)
         {
             _logger = logger;
             _mapper = mapper;
@@ -28,6 +33,7 @@ namespace CollegeApplication.Controllers
         [Route("All")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        //[DisableCors]
         public async Task<ActionResult<IEnumerable<StudentDto>>> getStudents()
         {
             _logger.LogInformation("Get Student method");
@@ -92,7 +98,7 @@ namespace CollegeApplication.Controllers
             }
 
 
-            var student = await _studentRepository.GetByIdAsync(student => student.Id == id);
+            var student = await _studentRepository.GetAsync(student => student.Id == id);
             //NotFound - 404 - Client Error
             if (student == null)
             {
@@ -127,7 +133,7 @@ namespace CollegeApplication.Controllers
             if (string.IsNullOrEmpty(name))
                 return BadRequest();
 
-            var student = await _studentRepository.GetByNameAsync(student => student.Name.ToLower().Contains(name.ToLower()));
+            var student = await _studentRepository.GetAsync(student => student.Name.ToLower().Contains(name.ToLower()));
             //NotFound - 404 - Client Error
             if (student == null)
                 return NotFound($"Student with name {name} not found.");
@@ -208,7 +214,7 @@ namespace CollegeApplication.Controllers
                 return BadRequest("Please enter valid student details.");
 
             //If we fetch the record with no tracking, then we can create a new object for entity class and directly update the record and need not have to map all columns as we did earlier.
-            var student = await _studentRepository.GetByIdAsync(student => student.Id == studentDto.Id, true);
+            var student = await _studentRepository.GetAsync(student => student.Id == studentDto.Id, true);
             if (student == null)
                 return NotFound($"Student with id {studentDto.Id} not found.");
 
@@ -247,7 +253,7 @@ namespace CollegeApplication.Controllers
             if (studentDto == null || id <= 0)
                 return BadRequest("Please enter valid student details.");
 
-            var existingStudent = await _studentRepository.GetByIdAsync(student => student.Id == id, true);
+            var existingStudent = await _studentRepository.GetAsync(student => student.Id == id, true);
             if (existingStudent == null)
                 return NotFound($"Student with id {id} not found.");
 
@@ -292,7 +298,7 @@ namespace CollegeApplication.Controllers
             if (id <= 0)
                 return BadRequest();
 
-            var student = await _studentRepository.GetByIdAsync(student => student.Id == id);
+            var student = await _studentRepository.GetAsync(student => student.Id == id);
             //NotFound - 404 - Client Error
             if (student == null)
                 return NotFound($"Student with id {id} not found.");

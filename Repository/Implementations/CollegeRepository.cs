@@ -29,7 +29,7 @@ namespace Repository.Implementations
             return true;
         }
 
-        public async Task<T> GetByIdAsync(Expression<Func<T, bool>> filter, bool asNoTracking = false)
+        public async Task<T> GetAsync(Expression<Func<T, bool>> filter, bool asNoTracking = false)
         {
             if (asNoTracking)
             {
@@ -38,10 +38,10 @@ namespace Repository.Implementations
             return await _dbSet.Where(filter).FirstOrDefaultAsync();
         }
 
-        public async Task<T> GetByNameAsync(Expression<Func<T, bool>> filter)
-        {
-            return await _dbSet.Where(filter).FirstOrDefaultAsync();
-        }
+        //public async Task<T> GetByNameAsync(Expression<Func<T, bool>> filter)
+        //{
+        //    return await _dbSet.Where(filter).FirstOrDefaultAsync();
+        //}
 
         public async Task<List<T>> GetAllAsync()
         {
