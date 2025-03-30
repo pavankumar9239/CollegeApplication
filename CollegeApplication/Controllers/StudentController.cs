@@ -12,8 +12,8 @@ namespace CollegeApplication.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[EnableCors(PolicyName = "AllowLocalHost")]
-    [Authorize]
+    [EnableCors(PolicyName = "AllowLocalHost")]
+    [Authorize(AuthenticationSchemes = "LoginForLocal", Roles = "SuperAdmin, Admin")]
     public class StudentController : ControllerBase
     {
         private readonly ILogger<StudentController> _logger;
@@ -34,6 +34,7 @@ namespace CollegeApplication.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         //[DisableCors]
+        //[AllowAnonymous]
         public async Task<ActionResult<IEnumerable<StudentDto>>> getStudents()
         {
             _logger.LogInformation("Get Student method");

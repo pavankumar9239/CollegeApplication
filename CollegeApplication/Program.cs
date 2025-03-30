@@ -6,6 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using CollegeApplication.Configurations;
 using Repository.RepositoryExtensions;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CollegeApplication
 {
@@ -67,6 +70,46 @@ namespace CollegeApplication
                 //});
             });
 
+            var keyJWTSecretGoogle = Encoding.ASCII.GetBytes(builder.Configuration.GetValue<string>("JWTSecretGoogle"));
+            var keyJWTSecretMicrosoft = Encoding.ASCII.GetBytes(builder.Configuration.GetValue<string>("JWTSecretMicrosoft"));
+            var keyJWTSecretLocal = Encoding.ASCII.GetBytes(builder.Configuration.GetValue<string>("JWTSecretLocal"));
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer("LoginForGoogle", options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(keyJWTSecretGoogle),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
+            }).AddJwtBearer("LoginForMicrosoft", options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(keyJWTSecretMicrosoft),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
+            }).AddJwtBearer("LoginForLocal", options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(keyJWTSecretLocal),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
+            });
+
             #region Serilog settings
             //For using Serilog
             Log.Logger = new LoggerConfiguration()
@@ -89,7 +132,9 @@ namespace CollegeApplication
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
             
+
             app.UseHttpsRedirection();
 
             app.UseRouting();
@@ -98,6 +143,8 @@ namespace CollegeApplication
             //app.UseCors("MyTestPolicy");
             //To use default policy
             app.UseCors();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
