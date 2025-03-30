@@ -27,25 +27,46 @@ namespace CollegeApplication.Controllers
         [Route("Login")]
         public ActionResult Login(LoginDto model)
         {
-            if(!ModelState.IsValid)
+             if(!ModelState.IsValid)
             {
                 return BadRequest("Please provide valid user name and password.");
             }
 
+            byte[] key = null;
+            var issuer = string.Empty;
+            var audience = string.Empty;
+
+            if(model.Policy.ToLower() == "local")
+            {
+                key = Encoding.ASCII.GetBytes(_configuration.GetValue<string>("JWTSecretLocal"));
+                issuer = _configuration.GetValue<string>("LocalIssuer");
+                audience = _configuration.GetValue<string>("LocalAudience");
+            }
+            else if(model.Policy.ToLower() == "microsoft")
+            {
+                key = Encoding.ASCII.GetBytes(_configuration.GetValue<string>("JWTSecretMicrosoft"));
+                issuer = _configuration.GetValue<string>("MicrosoftIssuer");
+                audience = _configuration.GetValue<string>("MicrosoftAudience");
+            }
+            else if(model.Policy.ToLower() == "google")
+            {
+                key = Encoding.ASCII.GetBytes(_configuration.GetValue<string>("JWTSecretGoogle"));
+                issuer = _configuration.GetValue<string>("GoogleIssuer");
+                audience = _configuration.GetValue<string>("GoogleAudience");
+            }
+
             LoginResponseDto response = new() { UserName = model.UserName };
+
             if(model.UserName == "APK" && model.Password == "Apk@123")
             {
-                var keyJWTSecretGoogle = Encoding.ASCII.GetBytes(_configuration.GetValue<string>("JWTSecretGoogle"));
-                var keyJWTSecretMicrosoft = Encoding.ASCII.GetBytes(_configuration.GetValue<string>("JWTSecretMicrosoft"));
-                var keyJWTSecretLocal = Encoding.ASCII.GetBytes(_configuration.GetValue<string>("JWTSecretLocal"));
-
-                var key = model.Policy.ToLower() == "local" ? keyJWTSecretLocal :
-                    model.Policy.ToLower() == "microsoft" ? keyJWTSecretMicrosoft :
-                    model.Policy.ToLower() == "google" ? keyJWTSecretGoogle : null;
 
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var tokenDescriptor = new SecurityTokenDescriptor()
                 {
+                    Issuer = issuer,
+
+                    Audience = audience,
+
                     Subject = new ClaimsIdentity(new Claim[]
                     {
                         new Claim(ClaimTypes.Name, model.UserName),

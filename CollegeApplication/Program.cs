@@ -74,6 +74,14 @@ namespace CollegeApplication
             var keyJWTSecretMicrosoft = Encoding.ASCII.GetBytes(builder.Configuration.GetValue<string>("JWTSecretMicrosoft"));
             var keyJWTSecretLocal = Encoding.ASCII.GetBytes(builder.Configuration.GetValue<string>("JWTSecretLocal"));
 
+            var googleAudience = builder.Configuration.GetValue<string>("GoogleAudience");
+            var microsoftAudience = builder.Configuration.GetValue<string>("MicrosoftAudience");
+            var localAudience = builder.Configuration.GetValue<string>("LocalAudience");
+
+            var googleIssuer = builder.Configuration.GetValue<string>("GoogleIssuer");
+            var microsoftIssuer = builder.Configuration.GetValue<string>("MicrosoftIssuer");
+            var localIssuer = builder.Configuration.GetValue<string>("LocalIssuer");
+
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -85,8 +93,12 @@ namespace CollegeApplication
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(keyJWTSecretGoogle),
-                    ValidateIssuer = false,
-                    ValidateAudience = false
+
+                    ValidateIssuer = true,
+                    ValidIssuer = googleIssuer,
+
+                    ValidateAudience = true,
+                    ValidAudience = googleAudience
                 };
             }).AddJwtBearer("LoginForMicrosoft", options =>
             {
@@ -95,8 +107,12 @@ namespace CollegeApplication
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(keyJWTSecretMicrosoft),
-                    ValidateIssuer = false,
-                    ValidateAudience = false
+
+                    ValidateIssuer = true,
+                    ValidIssuer = microsoftIssuer,
+
+                    ValidateAudience = true,
+                    ValidAudience = microsoftAudience
                 };
             }).AddJwtBearer("LoginForLocal", options =>
             {
@@ -105,8 +121,12 @@ namespace CollegeApplication
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(keyJWTSecretLocal),
-                    ValidateIssuer = false,
-                    ValidateAudience = false
+
+                    ValidateIssuer = true,
+                    ValidIssuer = localIssuer,
+
+                    ValidateAudience = true,
+                    ValidAudience = localAudience
                 };
             });
 
