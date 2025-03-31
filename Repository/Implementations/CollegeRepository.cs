@@ -48,6 +48,10 @@ namespace Repository.Implementations
             return await _dbSet.ToListAsync();
         }
 
+        public async Task<List<T>> GetAllByColumnAsync(Expression<Func<T, bool>> filter)
+        {
+            return await _dbSet.Where(filter).ToListAsync();
+        }
         public async Task<T> UpdateAsync(T record)
         {
             _dbSet.Update(record);

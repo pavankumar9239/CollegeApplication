@@ -10,6 +10,8 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using CollegeApplication.Services.UserService.Contracts;
+using CollegeApplication.Services.UserServices.Implementations;
 
 namespace CollegeApplication
 {
@@ -239,6 +241,8 @@ namespace CollegeApplication
             });
 
             services.AddAutoMapper(typeof(AutoMapperConfig));
+
+            services.AddScoped<IUserService, UserService>();
 
             RepositoryExtensions.AddRepositoriesExtensions(services);
         }

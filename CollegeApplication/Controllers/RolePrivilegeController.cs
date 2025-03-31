@@ -1,30 +1,26 @@
 ﻿using AutoMapper;
-using Azure;
 using CollegeApplication.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Contracts;
 using Repository.Models;
 using System.Net;
-using System.Threading.Tasks;
 
 namespace CollegeApplication.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(AuthenticationSchemes = "LoginForLocal", Roles = "SuperAdmin, Admin")]
-    public class RoleController : ControllerBase
+    public class RolePrivilegeController : ControllerBase
     {
         private readonly IMapper _mapper;
-        private readonly ICollegeRepository<Role> _roleRepository;
+        private readonly ICollegeRepository<RolePrivilege> _rolePrivilegeRepository;
         private ApiResponseDto _apiresponse;
-        public RoleController(IMapper mapper, ICollegeRepository<Role> rolerepository)
+
+        public RolePrivilegeController(IMapper mapper, ICollegeRepository<RolePrivilege> rolePrivilegeRepository)
         {
             _mapper = mapper;
-            _roleRepository = rolerepository;
+            _rolePrivilegeRepository = rolePrivilegeRepository;
             _apiresponse = new();
             _apiresponse.Error = new();
         }
@@ -37,7 +33,7 @@ namespace CollegeApplication.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiResponseDto>> CreateRoleAsync(RoleDto dto)
+        public async Task<ActionResult<ApiResponseDto>> CreateRolePrivilegeAsync(RolePrivilegeDto dto)
         {
             try
             {
@@ -45,17 +41,17 @@ namespace CollegeApplication.Controllers
                 {
                     _apiresponse.StatusCode = HttpStatusCode.BadRequest;
                     _apiresponse.Status = false;
-                    _apiresponse.Error.Add("Please provide valid Role data");
+                    _apiresponse.Error.Add("Please provide valid RolePrivilege data");
                     return BadRequest(_apiresponse);
                 }
 
-                Role role = _mapper.Map<Role>(dto);
+                RolePrivilege rolePrivilege = _mapper.Map<RolePrivilege>(dto);
 
-                role.IsDeleted = false;
-                role.CreatedDate = DateTime.Now;
-                role.ModifiedDate = DateTime.Now;
+                rolePrivilege.IsDeleted = false;
+                rolePrivilege.CreatedDate = DateTime.Now;
+                rolePrivilege.ModifiedDate = DateTime.Now;
 
-                var result = await _roleRepository.CreateAsync(role);
+                var result = await _rolePrivilegeRepository.CreateAsync(rolePrivilege);
 
                 dto.Id = result.Id;
 
@@ -63,7 +59,7 @@ namespace CollegeApplication.Controllers
                 _apiresponse.Status = true;
                 _apiresponse.Data = dto;
 
-                return CreatedAtRoute("GetRoleById", new { id = dto.Id }, _apiresponse);
+                return CreatedAtRoute("GetRolePrivilegeById", new { id = dto.Id }, _apiresponse);
                 //return Ok(_apiresponse);
             }
             catch (Exception ex)
@@ -72,23 +68,23 @@ namespace CollegeApplication.Controllers
                 _apiresponse.Status = false;
                 _apiresponse.Error.Add(ex.Message);
                 return _apiresponse;
-            }            
+            }
         }
 
         [HttpGet]
-        [Route("GetAllRoles")]
+        [Route("GetAllRolePrivileges")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiResponseDto>> GetRoles()
+        public async Task<ActionResult<ApiResponseDto>> GetRolePrivileges()
         {
             try
             {
-                var roles = await _roleRepository.GetAllAsync();
+                var rolePrivileges = await _rolePrivilegeRepository.GetAllAsync();
 
-                _apiresponse.Data = _mapper.Map<List<RoleDto>>(roles);
+                _apiresponse.Data = _mapper.Map<List<RolePrivilegeDto>>(rolePrivileges);
                 _apiresponse.Status = true;
                 _apiresponse.StatusCode = HttpStatusCode.OK;
 
@@ -100,41 +96,86 @@ namespace CollegeApplication.Controllers
                 _apiresponse.Status = false;
                 _apiresponse.Error.Add(ex.Message);
                 return _apiresponse;
-            }            
+            }
         }
 
         [HttpGet]
-        [Route("{id:int}", Name = "GetRoleById")]
+        [Route("GetRolePrivilegesByRoleId")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiResponseDto>> GetRoleById(int id)
+        public async Task<ActionResult<ApiResponseDto>> GetRolePrivilegesByRoleId(int roleId)
         {
             try
             {
-                if(id <= 0 || id == null)
+                if (roleId <= 0 || roleId == null)
                 {
                     _apiresponse.StatusCode = HttpStatusCode.BadRequest;
                     _apiresponse.Status = false;
-                    _apiresponse.Error.Add("Please provide valid Role data");
+                    _apiresponse.Error.Add("Please provide valid RolePrivilege data");
                     return BadRequest(_apiresponse);
                 }
 
-                var role = await _roleRepository.GetAsync(x => x.Id == id);
+                var rolePrivileges = await _rolePrivilegeRepository.GetAllByColumnAsync(x => x.RoleId == roleId);
+                if (rolePrivileges.Count == 0)
+                {
+                    _apiresponse.Status = false;
+                    _apiresponse.StatusCode = HttpStatusCode.NotFound;
+                    _apiresponse.Error.Add($@"RolePrivilege with provided roleId {roleId} not found.");
+                    return NotFound(_apiresponse);
+                }
+                
+
+                _apiresponse.Data = _mapper.Map<List<RolePrivilegeDto>>(rolePrivileges);
+                _apiresponse.Status = true;
+                _apiresponse.StatusCode = HttpStatusCode.OK;
+
+                return Ok(_apiresponse);
+            }
+            catch (Exception ex)
+            {
+                _apiresponse.StatusCode = HttpStatusCode.InternalServerError;
+                _apiresponse.Status = false;
+                _apiresponse.Error.Add(ex.Message);
+                return _apiresponse;
+            }
+        }
+
+        [HttpGet]
+        [Route("{id:int}", Name = "GetRolePrivilegeById")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiResponseDto>> GetRolePrivilegeById(int id)
+        {
+            try
+            {
+                if (id <= 0 || id == null)
+                {
+                    _apiresponse.StatusCode = HttpStatusCode.BadRequest;
+                    _apiresponse.Status = false;
+                    _apiresponse.Error.Add("Please provide valid RolePrivilege data");
+                    return BadRequest(_apiresponse);
+                }
+
+                var role = await _rolePrivilegeRepository.GetAsync(x => x.Id == id);
                 if (role == null)
                 {
                     _apiresponse.Status = false;
                     _apiresponse.StatusCode = HttpStatusCode.NotFound;
-                    _apiresponse.Error.Add($@"Role with provided id {id} not found.");
+                    _apiresponse.Error.Add($@"RolePrivilege with provided id {id} not found.");
                     return NotFound(_apiresponse);
                 }
 
                 _apiresponse.Status = true;
                 _apiresponse.StatusCode = HttpStatusCode.OK;
-                _apiresponse.Data = _mapper.Map<RoleDto>(role);
+                _apiresponse.Data = _mapper.Map<RolePrivilegeDto>(role);
                 return Ok(_apiresponse);
             }
             catch (Exception ex)
@@ -147,14 +188,14 @@ namespace CollegeApplication.Controllers
         }
 
         [HttpGet]
-        [Route("{name:alpha}", Name = "GetRoleByName")]
+        [Route("{name:alpha}", Name = "GetRolePrivilegeByName")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiResponseDto>> GetRoleByName(string name)
+        public async Task<ActionResult<ApiResponseDto>> GetRolePrivilegeByName(string name)
         {
             try
             {
@@ -162,22 +203,22 @@ namespace CollegeApplication.Controllers
                 {
                     _apiresponse.StatusCode = HttpStatusCode.BadRequest;
                     _apiresponse.Status = false;
-                    _apiresponse.Error.Add("Please provide valid Role data");
+                    _apiresponse.Error.Add("Please provide valid RolePrivilege data");
                     return BadRequest(_apiresponse);
                 }
 
-                var role = await _roleRepository.GetAsync(x => x.RoleName.Equals(name));
+                var role = await _rolePrivilegeRepository.GetAsync(x => x.RolePrivilegeName.Contains(name));
                 if (role == null)
                 {
                     _apiresponse.Status = false;
                     _apiresponse.StatusCode = HttpStatusCode.NotFound;
-                    _apiresponse.Error.Add($@"Role with provided name {name} not found.");
+                    _apiresponse.Error.Add($@"RolePrivilege with provided name {name} not found.");
                     return NotFound(_apiresponse);
                 }
 
                 _apiresponse.Status = true;
                 _apiresponse.StatusCode = HttpStatusCode.OK;
-                _apiresponse.Data = _mapper.Map<RoleDto>(role);
+                _apiresponse.Data = _mapper.Map<RolePrivilegeDto>(role);
                 return Ok(_apiresponse);
             }
             catch (Exception ex)
@@ -192,41 +233,42 @@ namespace CollegeApplication.Controllers
         [HttpPut]
         [Route("Update")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiResponseDto>> UpdateRoleAsync([FromBody] RoleDto roleDto)
+        public async Task<ActionResult<ApiResponseDto>> UpdateRolePrivilegeAsync([FromBody] RolePrivilegeDto rolePrivilegeDto)
         {
             try
             {
-                if(roleDto == null || roleDto.Id <= 0)
+                if (rolePrivilegeDto == null || rolePrivilegeDto.Id <= 0)
                 {
                     _apiresponse.StatusCode = HttpStatusCode.BadRequest;
                     _apiresponse.Status = false;
-                    _apiresponse.Error.Add("Please provide valid Role data");
+                    _apiresponse.Error.Add("Please provide valid RolePrivilege data");
                     return BadRequest(_apiresponse);
                 }
 
-                Role role = await _roleRepository.GetAsync(role => role.Id == roleDto.Id, true);
+                RolePrivilege rolePrivilege = await _rolePrivilegeRepository.GetAsync(rolePrivilege => rolePrivilege.Id == rolePrivilegeDto.Id, true);
 
-                if(role == null)
+                if (rolePrivilege == null)
                 {
                     _apiresponse.Status = false;
                     _apiresponse.StatusCode = HttpStatusCode.NotFound;
-                    _apiresponse.Error.Add($@"Role with provided id {roleDto.Id} not found.");
+                    _apiresponse.Error.Add($@"RolePrivilege with provided id {rolePrivilegeDto.Id} not found.");
                     return NotFound(_apiresponse);
                 }
 
-                var newRole = _mapper.Map<Role>(roleDto);
-                newRole.CreatedDate = role.CreatedDate;
-                newRole.ModifiedDate = DateTime.Now;
+                var newRolePrivilege = _mapper.Map<RolePrivilege>(rolePrivilegeDto);
+                newRolePrivilege.CreatedDate = rolePrivilege.CreatedDate;
+                newRolePrivilege.ModifiedDate = DateTime.Now;
 
-                await _roleRepository.UpdateAsync(newRole);
+                await _rolePrivilegeRepository.UpdateAsync(newRolePrivilege);
 
                 _apiresponse.Status = true;
                 _apiresponse.StatusCode = HttpStatusCode.OK;
-                _apiresponse.Data = _mapper.Map<RoleDto>(newRole);
+                _apiresponse.Data = _mapper.Map<RolePrivilegeDto>(newRolePrivilege);
 
                 return Ok(_apiresponse);
             }
@@ -242,56 +284,57 @@ namespace CollegeApplication.Controllers
         [HttpPatch]
         [Route("UpdatePartial")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiResponseDto>> UpdatePartial(int id, [FromBody] JsonPatchDocument<RoleDto> roleDto)
+        public async Task<ActionResult<ApiResponseDto>> UpdatePartial(int id, [FromBody] JsonPatchDocument<RolePrivilegeDto> rolePrivilegeDto)
         {
             try
             {
-                if(roleDto == null || id <= 0)
+                if (rolePrivilegeDto == null || id <= 0)
                 {
                     _apiresponse.StatusCode = HttpStatusCode.BadRequest;
                     _apiresponse.Status = false;
-                    _apiresponse.Error.Add("Please provide valid Role data");
+                    _apiresponse.Error.Add("Please provide valid RolePrivilege data");
                     return BadRequest(_apiresponse);
                 }
 
-                var role = await _roleRepository.GetAsync(x => x.Id == id, true);
+                var rolePrivilege = await _rolePrivilegeRepository.GetAsync(x => x.Id == id, true);
 
-                var createdDate = role.CreatedDate;
+                var createdDate = rolePrivilege.CreatedDate;
 
-                if (role == null)
+                if (rolePrivilege == null)
                 {
                     _apiresponse.Status = false;
                     _apiresponse.StatusCode = HttpStatusCode.NotFound;
-                    _apiresponse.Error.Add($@"Role with provided id {id} not found.");
+                    _apiresponse.Error.Add($@"RolePrivilege with provided id {id} not found.");
                     return NotFound(_apiresponse);
                 }
 
-                var newRoleDto = _mapper.Map<RoleDto>(role);
+                var newRolePrivilegeDto = _mapper.Map<RolePrivilegeDto>(rolePrivilege);
 
-                roleDto.ApplyTo(newRoleDto, ModelState);
+                rolePrivilegeDto.ApplyTo(newRolePrivilegeDto, ModelState);
 
-                if(!ModelState.IsValid)
+                if (!ModelState.IsValid)
                 {
                     _apiresponse.StatusCode = HttpStatusCode.BadRequest;
                     _apiresponse.Status = false;
-                    _apiresponse.Error.Add("Please provide valid Role data");
+                    _apiresponse.Error.Add("Please provide valid RolePrivilege data");
                     return BadRequest(_apiresponse);
                 }
 
-                role = _mapper.Map<Role>(newRoleDto);
+                rolePrivilege = _mapper.Map<RolePrivilege>(newRolePrivilegeDto);
 
-                role.CreatedDate = createdDate;
-                role.ModifiedDate = DateTime.Now;
+                rolePrivilege.CreatedDate = createdDate;
+                rolePrivilege.ModifiedDate = DateTime.Now;
 
-                await _roleRepository.UpdateAsync(role);
+                await _rolePrivilegeRepository.UpdateAsync(rolePrivilege);
 
                 _apiresponse.Status = true;
                 _apiresponse.StatusCode = HttpStatusCode.OK;
-                _apiresponse.Data = newRoleDto;
+                _apiresponse.Data = newRolePrivilegeDto;
 
                 return Ok(_apiresponse);
             }
@@ -307,6 +350,7 @@ namespace CollegeApplication.Controllers
         [HttpDelete]
         [Route("Delete")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]     
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -317,13 +361,13 @@ namespace CollegeApplication.Controllers
             {
                 _apiresponse.StatusCode = HttpStatusCode.BadRequest;
                 _apiresponse.Status = false;
-                _apiresponse.Error.Add("Please provide valid Role data");
+                _apiresponse.Error.Add("Please provide valid RolePrivilege data");
                 return BadRequest(_apiresponse);
             }
 
-            Role role = await _roleRepository.GetAsync(role => role.Id == id);
+            RolePrivilege rolePrivilege = await _rolePrivilegeRepository.GetAsync(rolePrivilege => rolePrivilege.Id == id);
 
-            if (role == null)
+            if (rolePrivilege == null)
             {
                 _apiresponse.Status = false;
                 _apiresponse.StatusCode = HttpStatusCode.NotFound;
@@ -331,7 +375,7 @@ namespace CollegeApplication.Controllers
                 return NotFound(_apiresponse);
             }
 
-            await _roleRepository.DeleteAsync(role);
+            await _rolePrivilegeRepository.DeleteAsync(rolePrivilege);
 
             _apiresponse.Status = true;
             _apiresponse.StatusCode = HttpStatusCode.OK;
