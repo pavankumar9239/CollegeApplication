@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repository.DBContext;
 
@@ -11,9 +12,11 @@ using Repository.DBContext;
 namespace Repository.Migrations
 {
     [DbContext(typeof(CollegeDBContext))]
-    partial class CollegeDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250331073119_AddusertypeTable")]
+    partial class AddusertypeTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -223,8 +226,6 @@ namespace Repository.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserTypeId");
-
                     b.ToTable("Users", (string)null);
                 });
 
@@ -323,18 +324,6 @@ namespace Repository.Migrations
                     b.Navigation("Department");
                 });
 
-            modelBuilder.Entity("Repository.Models.User", b =>
-                {
-                    b.HasOne("Repository.Models.UserType", "UserType")
-                        .WithMany("Users")
-                        .HasForeignKey("UserTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_Users_UserTypes");
-
-                    b.Navigation("UserType");
-                });
-
             modelBuilder.Entity("Repository.Models.UserRoleMapping", b =>
                 {
                     b.HasOne("Repository.Models.Role", "Role")
@@ -371,11 +360,6 @@ namespace Repository.Migrations
             modelBuilder.Entity("Repository.Models.User", b =>
                 {
                     b.Navigation("UserRoleMappings");
-                });
-
-            modelBuilder.Entity("Repository.Models.UserType", b =>
-                {
-                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }
