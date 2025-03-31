@@ -12,7 +12,7 @@ namespace Repository.Configurations
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).UseIdentityColumn();
             builder.Property(x => x.RoleName).HasMaxLength(250).IsRequired();
-            builder.Property(x => x.Desciption);
+            builder.Property(x => x.Description);
             builder.Property(x => x.IsActive).IsRequired();
             builder.Property(x => x.IsDeleted).IsRequired();
             builder.Property(x => x.CreatedDate).IsRequired();
