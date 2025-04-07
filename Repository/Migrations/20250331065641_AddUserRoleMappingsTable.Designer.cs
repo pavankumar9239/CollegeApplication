@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repository.DBContext;
 
@@ -11,9 +12,11 @@ using Repository.DBContext;
 namespace Repository.Migrations
 {
     [DbContext(typeof(CollegeDBContext))]
-    partial class CollegeDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250331065641_AddUserRoleMappingsTable")]
+    partial class AddUserRoleMappingsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -69,7 +72,7 @@ namespace Repository.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Description")
+                    b.Property<string>("Desciption")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -218,12 +221,10 @@ namespace Repository.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserTypeId")
+                    b.Property<int>("UserType")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("UserTypeId");
 
                     b.ToTable("Users", (string)null);
                 });
@@ -252,55 +253,6 @@ namespace Repository.Migrations
                     b.ToTable("UserRoleMappings", (string)null);
                 });
 
-            modelBuilder.Entity("Repository.Models.UserType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(1500)
-                        .HasColumnType("nvarchar(1500)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("UserTypes", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Description = "For Students",
-                            Name = "Students"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Description = "For Teaching Staff",
-                            Name = "Teaching Staff"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "For Non Teaching Staff",
-                            Name = "Non Teaching Staff"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Description = "For Parents",
-                            Name = "Parents"
-                        });
-                });
-
             modelBuilder.Entity("Repository.Models.RolePrivilege", b =>
                 {
                     b.HasOne("Repository.Models.Role", "Role")
@@ -321,18 +273,6 @@ namespace Repository.Migrations
                         .HasConstraintName("FK_Students_Department");
 
                     b.Navigation("Department");
-                });
-
-            modelBuilder.Entity("Repository.Models.User", b =>
-                {
-                    b.HasOne("Repository.Models.UserType", "UserType")
-                        .WithMany("Users")
-                        .HasForeignKey("UserTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_Users_UserTypes");
-
-                    b.Navigation("UserType");
                 });
 
             modelBuilder.Entity("Repository.Models.UserRoleMapping", b =>
@@ -371,11 +311,6 @@ namespace Repository.Migrations
             modelBuilder.Entity("Repository.Models.User", b =>
                 {
                     b.Navigation("UserRoleMappings");
-                });
-
-            modelBuilder.Entity("Repository.Models.UserType", b =>
-                {
-                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }

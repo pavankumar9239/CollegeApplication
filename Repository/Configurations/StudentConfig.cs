@@ -1,12 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Repository.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Repository.Configurations
 {
@@ -30,7 +24,8 @@ namespace Repository.Configurations
                     Name = "APK",
                     Address = "SKLM",
                     Email = "apk@gmail.com",
-                    DOB = new DateTime(1997, 12, 21)
+                    DOB = new DateTime(1997, 12, 21),
+                    DepatmentId = 1
                 },
                 new Student
                 {
@@ -38,9 +33,15 @@ namespace Repository.Configurations
                     Name = "Poojita",
                     Address = "VIZAG",
                     Email = "poojita@gmail.com",
-                    DOB = new DateTime(2000, 09, 29)
+                    DOB = new DateTime(2000, 09, 29),
+                    DepatmentId = 2
                 }
             });
+
+            builder.HasOne(n => n.Department)
+                .WithMany(n => n.Students)
+                .HasForeignKey(n => n.DepatmentId)
+                .HasConstraintName("FK_Students_Department");
         }
     }
 }

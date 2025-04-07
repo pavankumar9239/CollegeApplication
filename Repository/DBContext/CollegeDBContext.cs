@@ -12,6 +12,13 @@ namespace Repository.DBContext
             
         }
         public DbSet<Student> Students { get; set; }
+        public DbSet<Department> Departments { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<RolePrivilege> RolePrivileges { get; set; }
+        public DbSet<UserRoleMapping> UserRoleMappings { get; set; }
+        public DbSet<UserType> UserTypes { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,6 +56,12 @@ namespace Repository.DBContext
             #endregion
 
             modelBuilder.ApplyConfiguration(new StudentConfig());
+            modelBuilder.ApplyConfiguration(new DepartmentConfig());
+            modelBuilder.ApplyConfiguration(new UserConfig());
+            modelBuilder.ApplyConfiguration(new RoleConfig());
+            modelBuilder.ApplyConfiguration(new RolePrivilegeConfig());
+            modelBuilder.ApplyConfiguration(new UserRoleMappingConfig());
+            modelBuilder.ApplyConfiguration(new UserTypeConfig());
         }
     }
 }
